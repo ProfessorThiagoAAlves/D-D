@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Classe D&D 5e</title>
+    <!-- Incluindo o Tailwind CSS para estilização -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Incluindo uma fonte temática do Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos personalizados */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-image: url('https://placehold.co/1920x1080/2d3748/1a202c.png?text=Fundo+de+Fantasia');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+        h1, h2, h3, .cinzel {
+            font-family: 'Cinzel', serif;
+        }
+        .card {
+            background-color: rgba(26, 32, 44, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        .answer-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(226, 88, 34, 0.3);
+        }
+        .answer-btn.selected {
+            background-color: #c53030; /* red-700 */
+            border-color: #c53030;
+        }
+        .action-btn {
+            background-color: #dd6b20; /* orange-600 */
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        .action-btn:hover {
+            background-color: #c05621; /* orange-700 */
+        }
+        .action-btn:disabled {
+            background-color: #4a5568; /* gray-600 */
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body class="bg-gray-800 text-white flex items-center justify-center min-h-screen p-4">
+
+    <div id="app" class="w-full max-w-3xl mx-auto">
+        <!-- Tela Inicial -->
+        <div id="start-screen" class="card p-8 rounded-lg shadow-2xl text-center">
+            <h1 class="text-4xl md:text-5xl font-bold text-orange-400 mb-4">O Herói Interior</h1>
+            <p class="text-gray-300 text-lg mb-8">Responda a 12 perguntas e descubra qual classe de Dungeons & Dragons mais combina com sua personalidade.</p>
+            <button id="start-btn" class="action-btn text-white font-bold py-3 px-8 rounded-lg text-xl shadow-lg hover:shadow-xl transition-all duration-300">Começar a Aventura</button>
+        </div>
+
+        <!-- Tela do Quiz -->
+        <div id="quiz-screen" class="hidden card p-8 rounded-lg shadow-2xl">
+            <!-- Barra de Progresso -->
+            <div class="w-full bg-gray-700 rounded-full h-2.5 mb-6">
+                <div id="progress-bar" class="bg-orange-500 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+            
+            <div id="question-container">
+                <h2 id="question-text" class="text-2xl md:text-3xl font-bold mb-6 text-center"></h2>
+                <div id="answers-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Respostas serão inseridas aqui via JS -->
+                </div>
+            </div>
+            
+            <div class="mt-8 text-right">
+                <button id="next-btn" class="action-btn text-white font-bold py-2 px-6 rounded-lg shadow-md" disabled>Próximo</button>
+            </div>
+        </div>
+
+        <!-- Tela de Resultados -->
+        <div id="results-screen" class="hidden card p-8 rounded-lg shadow-2xl text-center">
+            <h2 class="text-3xl font-bold mb-2">Seu resultado é...</h2>
+            <div id="top-result" class="my-6">
+                <h1 id="top-class-name" class="text-5xl font-bold text-orange-400"></h1>
+            </div>
+            <h3 class="text-xl font-bold mb-4 cinzel">Ranking Completo</h3>
+            <ul id="results-list" class="text-left max-w-md mx-auto space-y-2">
+                <!-- Ranking será inserido aqui via JS -->
+            </ul>
+            <button id="restart-btn" class="action-btn mt-8 text-white font-bold py-3 px-8 rounded-lg text-lg shadow-lg">Refazer Teste</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Definição das classes e perguntas
+            const classNames = ["Bárbaro", "Bardo", "Clérigo", "Druida", "Guerreiro", "Monge", "Paladino", "Patrulheiro", "Ladino", "Feiticeiro", "Bruxo", "Mago"];
+
+            const questions = [
+                {
+                    question: "Quando confrontado com um obstáculo intransponível, sua primeira reação é:",
+                    answers: {
+                        'A': "Procurar a fraqueza do problema ou uma solução criativa.",
+                        'B': "Atacá-lo com força bruta e determinação.",
+                        'C': "Usar sua inteligência e conhecimento para encontrar uma solução.",
+                        'D': "Chamar os amigos e buscar um meio-termo para resolver o problema."
+                    }
+                },
+                {
+                    question: "O que te motiva mais em uma aventura?",
+                    answers: {
+                        'A': "Desvendar mistérios e expandir seu conhecimento sobre o mundo.",
+                        'B': "Provar sua força e coragem em combate.",
+                        'C': "Ajudar os necessitados e proteger os inocentes.",
+                        'D': "A glória, o tesouro e o reconhecimento."
+                    }
+                },
+                {
+                    question: "Seu grupo é atacado por um dragão. Você:",
+                    answers: {
+                        'A': "Cura seus aliados e reforça suas defesas.",
+                        'B': "Lança uma magia poderosa para causar dano massivo.",
+                        'C': "Se move rapidamente e ataca o ponto fraco do inimigo.",
+                        'D': "Enfrenta o dragão de peito aberto, absorvendo o impacto dos ataques."
+                    }
+                },
+                {
+                    question: "O que é mais importante para você em um grupo de aventureiros?",
+                    answers: {
+                        'A': "Confiança e laços que se tornam uma família.",
+                        'B': "Lealdade a um código de conduta e aos seus companheiros.",
+                        'C': "Liberdade para seguir seu próprio caminho, sem muitas regras.",
+                        'D': "Oportunidades para exibir seus talentos e impressionar os outros."
+                    }
+                },
+                {
+                    question: "Qual seria sua arma ideal?",
+                    answers: {
+                        'A': "Um espadão ou machado de duas mãos.",
+                        'B': "Um par de adagas ou uma besta.",
+                        'C': "Um cajado mágico ou um grimório.",
+                        'D': "Um alaúde ou sua própria voz."
+                    }
+                },
+                {
+                    question: "O que te levaria a quebrar as regras de uma sociedade?",
+                    answers: {
+                        'A': "Se as regras não fizerem sentido ou forem antiquadas.",
+                        'B': "Se elas estiverem em conflito com a sua natureza e liberdade.",
+                        'C': "Se for necessário para alcançar um objetivo maior e mais nobre.",
+                        'D': "Se houver uma oportunidade de obter uma vantagem pessoal."
+                    }
+                },
+                {
+                    question: "Qual dos seguintes hobbies você praticaria para se aprimorar?",
+                    answers: {
+                        'A': "Estudar tomos antigos e pergaminhos arcanos.",
+                        'B': "Meditar para fortalecer sua mente e espírito.",
+                        'C': "Passar horas treinando em um dojo ou campo de batalha.",
+                        'D': "Praticar música, oratória e performances artísticas."
+                    }
+                },
+                {
+                    question: "Em uma situação de risco de vida, qual é a sua principal preocupação?",
+                    answers: {
+                        'A': "Proteger aqueles que você jurou defender.",
+                        'B': "Salvar o máximo de pessoas possível.",
+                        'C': "Vencer o inimigo, não importa o custo.",
+                        'D': "Encontrar uma saída engenhosa para o perigo."
+                    }
+                },
+                {
+                    question: "Onde você se sentiria mais em casa?",
+                    answers: {
+                        'A': "Em uma biblioteca ou laboratório.",
+                        'B': "Na imensidão de uma floresta selvagem.",
+                        'C': "Em uma cidade movimentada, cheia de intrigas.",
+                        'D': "Na linha de frente de um exército, em meio ao combate."
+                    }
+                },
+                {
+                    question: "Seu amigo te pede ajuda com um problema. Você:",
+                    answers: {
+                        'A': "Oferece conselhos sábios e guiança.",
+                        'B': "Ensina a ele como resolver o problema por conta própria.",
+                        'C': "O apoia emocionalmente e o inspira a continuar.",
+                        'D': "Elabora um plano detalhado e o lidera para a vitória."
+                    }
+                },
+                {
+                    question: "Como você abordaria um problema complexo com um grupo?",
+                    answers: {
+                        'A': "Liderando com coragem e uma presença forte.",
+                        'B': "Tentando ser atencioso e compreensivo com todos.",
+                        'C': "Investigando o problema com lógica e pesquisa.",
+                        'D': "Confiando em sua força interior e vontade."
+                    }
+                },
+                {
+                    question: "O que te motiva mais na vida?",
+                    answers: {
+                        'A': "A busca por poder e conhecimento.",
+                        'B': "A liberdade pessoal e a independência.",
+                        'C': "O dever e a lealdade.",
+                        'D': "Viver uma vida de compaixão e serviço aos outros."
+                    }
+                }
+            ];
+
+            // Matriz de pontuação baseada na Tabela 2 do documento
+            const scoringMatrix = {
+                1:  { A: [1,2,0,2,0,1,0,1,2,2,1,2], B: [3,0,0,0,3,1,2,1,0,1,0,0], C: [0,0,2,1,1,2,1,1,1,1,2,3], D: [0,1,3,2,1,0,2,2,1,0,1,0] },
+                2:  { A: [0,1,1,1,0,0,1,1,1,2,2,3], B: [3,1,0,0,3,1,1,1,1,1,0,0], C: [0,1,3,2,1,1,3,2,1,1,1,0], D: [1,3,1,1,2,1,1,1,2,2,1,1] },
+                3:  { A: [0,1,3,2,1,1,2,2,0,0,1,1], B: [1,2,0,1,0,0,0,1,1,3,2,2], C: [1,1,0,1,1,2,1,2,3,1,1,1], D: [3,1,1,1,2,1,1,0,0,1,0,0] },
+                4:  { A: [1,2,1,2,1,2,2,2,1,1,1,1], B: [0,1,3,1,2,2,3,1,0,0,1,0], C: [2,1,0,1,0,1,0,2,3,2,1,1], D: [1,3,0,0,1,0,1,1,1,2,1,0] },
+                5:  { A: [3,1,1,0,3,1,2,1,0,0,0,0], B: [0,0,0,0,1,1,0,2,3,0,1,0], C: [0,1,1,2,1,1,1,1,0,2,2,3], D: [0,3,1,1,0,1,1,1,1,1,1,1] },
+                6:  { A: [1,1,0,1,1,1,0,1,2,1,2,2], B: [3,2,0,2,1,2,0,2,2,2,1,1], C: [0,1,2,1,1,1,3,1,1,0,1,0], D: [1,1,0,0,1,0,0,0,3,1,2,0] },
+                7:  { A: [0,1,1,1,0,0,0,0,0,1,2,3], B: [0,0,1,2,1,3,1,1,1,0,1,1], C: [1,1,1,1,3,2,2,2,1,1,1,1], D: [1,3,1,1,0,1,1,1,1,1,1,1] },
+                8:  { A: [1,1,2,1,2,1,3,1,1,0,1,0], B: [0,1,3,2,1,1,2,2,1,1,1,1], C: [3,1,0,0,3,1,1,1,2,1,0,1], D: [1,1,0,1,1,2,1,2,3,1,1,1] },
+                9:  { A: [0,1,0,0,0,0,0,0,1,1,2,3], B: [1,1,1,3,1,2,1,3,1,1,1,1], C: [1,2,1,1,1,1,1,1,3,2,2,1], D: [3,1,1,1,3,1,1,1,0,1,0,0] },
+                10: { A: [0,1,3,2,1,1,2,2,0,0,1,1], B: [0,0,0,1,1,2,1,1,1,1,2,3], C: [1,3,1,1,1,0,1,1,1,2,1,0], D: [1,1,1,1,2,1,3,1,1,1,1,1] },
+                11: { A: [2,1,1,0,3,1,2,1,0,1,1,0], B: [0,2,2,2,1,1,2,1,1,1,1,1], C: [1,1,1,1,1,1,0,1,2,1,2,3], D: [1,1,1,1,1,2,1,1,1,2,1,1] },
+                12: { A: [0,1,1,1,1,1,1,1,1,2,2,3], B: [2,1,0,2,1,1,0,3,2,1,1,1], C: [1,1,2,1,2,1,3,1,1,0,1,1], D: [1,1,3,2,1,1,2,1,0,0,1,0] }
+            };
+
+            // Elementos da UI
+            const startScreen = document.getElementById('start-screen');
+            const quizScreen = document.getElementById('quiz-screen');
+            const resultsScreen = document.getElementById('results-screen');
+            const startBtn = document.getElementById('start-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const restartBtn = document.getElementById('restart-btn');
+            const questionText = document.getElementById('question-text');
+            const answersContainer = document.getElementById('answers-container');
+            const progressBar = document.getElementById('progress-bar');
+            
+            // Estado do Quiz
+            let currentQuestionIndex = 0;
+            let userAnswers = {};
+
+            function startQuiz() {
+                currentQuestionIndex = 0;
+                userAnswers = {};
+                startScreen.classList.add('hidden');
+                resultsScreen.classList.add('hidden');
+                quizScreen.classList.remove('hidden');
+                displayQuestion();
+            }
+
+            function displayQuestion() {
+                const currentQuestion = questions[currentQuestionIndex];
+                questionText.textContent = `Pergunta ${currentQuestionIndex + 1}: ${currentQuestion.question}`;
+                answersContainer.innerHTML = '';
+                
+                Object.entries(currentQuestion.answers).forEach(([key, value]) => {
+                    const button = document.createElement('button');
+                    button.innerHTML = `<span class="font-bold mr-2">${key}.</span> ${value}`;
+                    button.classList.add('answer-btn', 'p-4', 'border-2', 'border-gray-600', 'rounded-lg', 'text-left', 'hover:bg-red-800', 'hover:border-red-700', 'transition-all', 'duration-200');
+                    button.dataset.answer = key;
+                    if(userAnswers[currentQuestionIndex] === key) {
+                        button.classList.add('selected');
+                    }
+                    button.addEventListener('click', () => selectAnswer(key));
+                    answersContainer.appendChild(button);
+                });
+
+                nextBtn.disabled = userAnswers[currentQuestionIndex] === undefined;
+                updateProgressBar();
+            }
+            
+            function selectAnswer(answer) {
+                userAnswers[currentQuestionIndex] = answer;
+                // Atualiza visualmente os botões
+                const allAnswerButtons = answersContainer.querySelectorAll('.answer-btn');
+                allAnswerButtons.forEach(btn => {
+                    if (btn.dataset.answer === answer) {
+                        btn.classList.add('selected');
+                    } else {
+                        btn.classList.remove('selected');
+                    }
+                });
+                nextBtn.disabled = false;
+            }
+
+            function nextQuestion() {
+                if(userAnswers[currentQuestionIndex] === undefined) return;
+
+                currentQuestionIndex++;
+                if (currentQuestionIndex < questions.length) {
+                    displayQuestion();
+                } else {
+                    calculateResults();
+                }
+            }
+            
+            function calculateResults() {
+                let classScores = Object.fromEntries(classNames.map(name => [name, 0]));
+
+                for(let i = 0; i < questions.length; i++) {
+                    const questionNum = i + 1;
+                    const userAnswer = userAnswers[i];
+                    const scores = scoringMatrix[questionNum][userAnswer];
+                    
+                    if(scores) {
+                        classNames.forEach((className, classIndex) => {
+                            classScores[className] += scores[classIndex];
+                        });
+                    }
+                }
+                
+                const sortedClasses = Object.entries(classScores).sort((a, b) => b[1] - a[1]);
+                displayResults(sortedClasses);
+            }
+            
+            function displayResults(sortedClasses) {
+                quizScreen.classList.add('hidden');
+                resultsScreen.classList.remove('hidden');
+                
+                const topClass = sortedClasses[0];
+                document.getElementById('top-class-name').textContent = topClass[0];
+
+                const resultsList = document.getElementById('results-list');
+                resultsList.innerHTML = '';
+                sortedClasses.forEach(([name, score], index) => {
+                    const li = document.createElement('li');
+                    li.classList.add('flex', 'justify-between', 'items-center', 'p-3', 'rounded-md', index === 0 ? 'bg-orange-900/50' : 'bg-gray-700/50');
+                    li.innerHTML = `
+                        <span class="font-bold">${index + 1}. ${name}</span>
+                        <span class="text-gray-300">${score} pontos</span>
+                    `;
+                    resultsList.appendChild(li);
+                });
+            }
+
+            function updateProgressBar() {
+                const progressPercentage = ((currentQuestionIndex) / questions.length) * 100;
+                progressBar.style.width = `${progressPercentage}%`;
+            }
+
+            // Event Listeners
+            startBtn.addEventListener('click', startQuiz);
+            nextBtn.addEventListener('click', nextQuestion);
+            restartBtn.addEventListener('click', startQuiz);
+        });
+    </script>
+</body>
+</html>
